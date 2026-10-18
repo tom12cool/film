@@ -1,5 +1,5 @@
 [
-{
+  {
     "title": "Man of Steel",
     "year": 2013,
     "imdb": 7.1,
@@ -9,7 +9,7 @@
     "moviefone": 67,
     "rtUrl": "https://www.rottentomatoes.com/",
     "mcUrl": "https://www.metacritic.com/"
-  }
+  },
   {
     "title": "The Shawshank Redemption",
     "year": 1994,
@@ -27,7 +27,7 @@
     "mc": 100,
     "rogerEbert": null,
     "moviefone": 87
-  },
+  }
   {
     "title": "The Dark Knight",
     "year": 2008,
