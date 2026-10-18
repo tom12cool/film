@@ -587,46 +587,68 @@ function setRatingText(id, value, suffix = "") {
       : "N/A";
 }
 
+
 async function searchScores() {
   const input = $("rating-search");
-  const title = input?.value.trim();
+  const query = input?.value.trim();
   const status = $("rating-status");
 
-  if (!title) {
+  if (!query) {
     if (status) status.textContent = "Please enter a movie title.";
     input?.focus();
     return;
   }
 
   try {
-    if (status) status.textContent = "Searching…";
+    if (status) status.textContent = "Loading movie scores…";
 
     const response = await fetch("./json.json", {
       cache: "no-store"
     });
 
     if (!response.ok) {
-      throw new Error(`Could not load json.json: HTTP ${response.status}`);
+      throw new Error(`json.json returned HTTP ${response.status}`);
     }
 
-    const movie = await response.json();
+    const data = await response.json();
 
-    if (
-      !movie ||
-      typeof movie !== "object" ||
-      Array.isArray(movie) ||
-      typeof movie.title !== "string"
-    ) {
-      throw new Error(
-        "json.json must contain one movie object with a title."
+    // Support an array of movies, not just a single object.
+    const movies = Array.isArray(data)
+      ? data
+      : Array.isArray(data.movies)
+        ? data.movies
+        : [data];
+
+    const normalize = value =>
+      String(value ?? "").trim().toLowerCase();
+
+    let movie = movies.find(
+      item => normalize(item.title) === normalize(query)
+    );
+
+    // If no exact match, allow a unique partial title match.
+    if (!movie) {
+      const matches = movies.filter(
+        item => normalize(item.title).includes(normalize(query))
       );
+
+      if (matches.length === 1) {
+        movie = matches[0];
+      }
     }
 
-    if (movie.title.trim().toLowerCase() !== title.toLowerCase()) {
+    if (!movie) {
       if (status) {
         status.textContent =
-          `Movie not found. The database currently contains "${movie.title}".`;
+          `No matching movie found for "${query}". Check the title in json.json.`;
       }
+
+      const heading = $("rating-title");
+      if (heading) heading.textContent = "Movie not found";
+
+      ["imdb", "rotten", "metacritic", "rogerebert", "moviefone"]
+        .forEach(id => setRatingText(id, null));
+
       return;
     }
 
@@ -666,16 +688,18 @@ async function searchScores() {
 
     updateRatingLinks(movie.title);
 
-    if (status) status.textContent = "Scores loaded successfully.";
+    if (status) {
+      status.textContent = "Scores loaded successfully.";
+    }
   } catch (error) {
-    console.error("Rating search failed:", error);
+    console.error("CriticGuide rating error:", error);
 
     if (status) {
-      status.textContent =
-        "Could not load scores. Check json.json and the browser console.";
+      status.textContent = `Could not load scores: ${error.message}`;
     }
   }
 }
+
 
 $("rating-form")?.addEventListener("submit", (event) => {
   event.preventDefault();
