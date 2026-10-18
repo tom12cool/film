@@ -20,7 +20,6 @@
     <h1>Latest Movie Reviews</h1>
     <p class="sub">Reviews from RogerEbert.com and Moviefone.</p>
 
-    <!-- Movie rating search -->
     <section class="panel" aria-labelledby="ratings-heading">
       <h2 id="ratings-heading">Movie Ratings</h2>
       <p class="muted">Enter a movie title to find its saved scores.</p>
@@ -81,7 +80,6 @@
       </div>
     </section>
 
-    <!-- Moviefone feed links and feed results -->
     <section class="panel" id="moviefone-feeds">
       <h2>Moviefone Reviews</h2>
 
@@ -105,7 +103,6 @@
       <div id="moviefone-movies" class="review-grid"></div>
     </section>
 
-    <!-- Review search and filters -->
     <section class="panel" aria-label="Review filters">
       <div class="toolbar">
         <input
@@ -145,11 +142,19 @@
     <section class="panel" id="ebert-section">
       <h2>RogerEbert.com Reviews</h2>
       <p class="muted">Latest reviews by RogerEbert.com.</p>
+    
+      <section class="panel" id="ebert-section">
+  <h2>RogerEbert.com Reviews</h2>
+  <p class="muted">Latest reviews from RogerEbert.com.</p>
 
-      
-      <div id="ebert-feed" aria-live="polite">
-        RogerEbert.com reviews will appear here.
-      </div>
+  <p id="ebert-status" class="status" role="status" aria-live="polite">
+    Loading RogerEbert reviews...
+  </p>
+
+  <div id="ebert-feed" class="review-grid"></div>
+</section>
+
+    
 
     <section class="panel">
       <h2>Review Sources</h2>
