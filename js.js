@@ -1,11 +1,3 @@
-
-"use strict";
-
-/* =========================================
-   CriticGuide — Movie Reviews and Ratings
-   File: js.js
-   ========================================= */
-
 const EBERT_FEEDS = [
   "https://www.rogerebert.com/reviews/feed",
   "https://www.rogerebert.com/feed"
@@ -30,10 +22,6 @@ const $ = id => document.getElementById(id);
 
 let reviews = [];
 
-
-/* =========================================
-   GENERAL HELPERS
-   ========================================= */
 
 function status(id, message) {
   const element = $(id);
@@ -99,10 +87,6 @@ function safeLink(value) {
 }
 
 
-/* =========================================
-   NORMALIZE REVIEW ENTRIES
-   ========================================= */
-
 function normalize(item, source) {
   const rawLink =
     item.link?.href ??
@@ -162,10 +146,6 @@ function normalize(item, source) {
 }
 
 
-/* =========================================
-   PARSE JSON, RSS AND ATOM FEEDS
-   ========================================= */
-
 function parseFeed(data, source) {
   // First, try JSON and JSON Feed formats.
   try {
@@ -188,10 +168,8 @@ function parseFeed(data, source) {
         );
     }
   } catch {
-    // Not JSON; continue to XML parsing.
   }
 
-  // Parse RSS or Atom XML.
   const xml = new DOMParser().parseFromString(
     data,
     "application/xml"
@@ -276,11 +254,6 @@ function parseFeed(data, source) {
     );
 }
 
-
-/* =========================================
-   FETCH FEEDS WITH PROXY FALLBACK
-   ========================================= */
-
 async function fetchFeed(url) {
   let lastError;
 
@@ -329,11 +302,6 @@ async function fetchFeed(url) {
   throw lastError ||
     new Error("All feed requests failed.");
 }
-
-
-/* =========================================
-   RENDER REVIEW CARDS
-   ========================================= */
 
 function render(containerId, items, emptyMessage) {
   const container = $(containerId);
@@ -384,8 +352,7 @@ function render(containerId, items, emptyMessage) {
 
     article.append(heading, metadata);
 
-    // RogerEbert shows a short excerpt.
-    // Other sources show their available description.
+   
     const description = document.createElement("p");
 
     description.textContent =
@@ -397,7 +364,6 @@ function render(containerId, items, emptyMessage) {
       article.appendChild(description);
     }
 
-    // Give RogerEbert cards a separate full-review link.
     if (
       review.source === "RogerEbert.com" &&
       review.link
@@ -416,10 +382,6 @@ function render(containerId, items, emptyMessage) {
   });
 }
 
-
-/* =========================================
-   SEARCH, FILTER AND SORT REVIEWS
-   ========================================= */
 
 function filterReviews() {
   const query = ($("search")?.value || "")
@@ -474,10 +436,6 @@ function filterReviews() {
 }
 
 
-/* =========================================
-   LOAD A REVIEW SOURCE
-   ========================================= */
-
 async function loadSource(
   urls,
   source,
@@ -497,7 +455,6 @@ async function loadSource(
         throw new Error("No review entries found.");
       }
 
-      // Replace only the reviews from this source.
       reviews = [
         ...reviews.filter(
           review => review.source !== source
@@ -546,10 +503,6 @@ async function loadSource(
 }
 
 
-/* =========================================
-   REFRESH REVIEW FEEDS
-   ========================================= */
-
 function refreshReviews() {
   status("status", "Refreshing review feeds...");
 
@@ -570,10 +523,6 @@ function refreshReviews() {
   ]);
 }
 
-
-/* =========================================
-   RATINGS SEARCH LINKS
-   ========================================= */
 
 function ratingLinks(title) {
   const links = {
@@ -615,11 +564,6 @@ function ratingLinks(title) {
   });
 }
 
-
-/* =========================================
-   SEARCH SAVED MOVIE RATINGS
-   ========================================= */
-
 async function searchRatings() {
   const title = $("rating-search")?.value.trim();
 
@@ -641,7 +585,6 @@ async function searchRatings() {
 
     const data = await response.json();
 
-    // Supports one movie object or an array of movies.
     const movies = Array.isArray(data)
       ? data
       : [data];
@@ -719,11 +662,6 @@ async function searchRatings() {
   }
 }
 
-
-/* =========================================
-   EVENT LISTENERS
-   ========================================= */
-
 $("rating-form")?.addEventListener(
   "submit",
   event => {
@@ -774,10 +712,5 @@ $("refresh-moviefone")?.addEventListener(
     );
   }
 );
-
-
-/* =========================================
-   INITIALIZE
-   ========================================= */
 
 refreshReviews();
