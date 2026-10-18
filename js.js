@@ -1,4 +1,3 @@
-
 const EBERT_FEEDS = [
   "https://www.rogerebert.com/reviews/feed",
   "https://www.rogerebert.com/feed"
