@@ -8,7 +8,7 @@
     "rogerEbert": "3/4 stars",
     "moviefone": 67,
     "rtUrl": "https://www.rottentomatoes.com/",
-    "mcUrl": "https://www.metacritic.com/"
+    "mcUrl": "https://metacritic.com"
   },
   {
     "title": "The Shawshank Redemption",
@@ -17,7 +17,9 @@
     "rt": 89,
     "mc": 82,
     "rogerEbert": "4/4 stars",
-    "moviefone": 87
+    "moviefone": 87,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/the-shawshank-redemption"
   },
   {
     "title": "The Godfather",
@@ -26,7 +28,9 @@
     "rt": 97,
     "mc": 100,
     "rogerEbert": "4/4 stars",
-    "moviefone": 87
+    "moviefone": 87,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/the-godfather"
   },
   {
     "title": "The Dark Knight",
@@ -34,8 +38,10 @@
     "imdb": 9.1,
     "rt": 94,
     "mc": 84,
-    "rogerEbert": null,
-    "moviefone": null
+    "rogerEbert": "4/4 stars",
+    "moviefone": 94,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/the-dark-knight"
   },
   {
     "title": "Pulp Fiction",
@@ -43,8 +49,10 @@
     "imdb": 8.9,
     "rt": 92,
     "mc": 95,
-    "rogerEbert": null,
-    "moviefone": 85
+    "rogerEbert": "4/4 stars",
+    "moviefone": 85,
+    "rtUrl": "https://www.rottentomatoes.com/m/pulp_fiction",
+    "mcUrl": "https://metacritic.commovie/pulp-fiction"
   },
   {
     "title": "Forrest Gump",
@@ -52,8 +60,10 @@
     "imdb": 8.8,
     "rt": 75,
     "mc": 82,
-    "rogerEbert": null,
-    "moviefone": 85
+    "rogerEbert": "4/4 stars",
+    "moviefone": 85,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/forrest-gump"
   },
   {
     "title": "The Matrix",
@@ -61,8 +71,10 @@
     "imdb": 8.7,
     "rt": 83,
     "mc": 73,
-    "rogerEbert": null,
-    "moviefone": 82
+    "rogerEbert": "3/4 stars",
+    "moviefone": 82,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/the-matrix"
   },
   {
     "title": "Goodfellas",
@@ -70,8 +82,10 @@
     "imdb": 8.7,
     "rt": 95,
     "mc": 90,
-    "rogerEbert": null,
-    "moviefone": 84
+    "rogerEbert": "4/4 stars",
+    "moviefone": 84,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/goodfellas"
   },
   {
     "title": "Interstellar",
@@ -79,8 +93,10 @@
     "imdb": 8.7,
     "rt": 73,
     "mc": 74,
-    "rogerEbert": null,
-    "moviefone": 85
+    "rogerEbert": "3.5/4 stars",
+    "moviefone": 85,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/interstellar"
   },
   {
     "title": "Parasite",
@@ -88,8 +104,10 @@
     "imdb": 8.5,
     "rt": 99,
     "mc": 96,
-    "rogerEbert": null,
-    "moviefone": 85
+    "rogerEbert": "4/4 stars",
+    "moviefone": 85,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/parasite"
   },
   {
     "title": "Whiplash",
@@ -97,8 +115,10 @@
     "imdb": 8.5,
     "rt": 94,
     "mc": 89,
-    "rogerEbert": null,
-    "moviefone": 84
+    "rogerEbert": "4/4 stars",
+    "moviefone": 84,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/whiplash"
   },
   {
     "title": "Gladiator",
@@ -106,8 +126,10 @@
     "imdb": 8.5,
     "rt": 80,
     "mc": 67,
-    "rogerEbert": null,
-    "moviefone": 82
+    "rogerEbert": "2/4 stars",
+    "moviefone": 82,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/gladiator"
   },
   {
     "title": "The Departed",
@@ -115,8 +137,10 @@
     "imdb": 8.5,
     "rt": 91,
     "mc": 85,
-    "rogerEbert": null,
-    "moviefone": 82
+    "rogerEbert": "4/4 stars",
+    "moviefone": 82,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/the-departed"
   },
   {
     "title": "Back to the Future",
@@ -124,8 +148,10 @@
     "imdb": 8.5,
     "rt": 93,
     "mc": 87,
-    "rogerEbert": null,
-    "moviefone": 83
+    "rogerEbert": "3.5/4 stars",
+    "moviefone": 83,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/back-to-the-future"
   },
   {
     "title": "The Lion King",
@@ -133,8 +159,10 @@
     "imdb": 8.5,
     "rt": 92,
     "mc": 88,
-    "rogerEbert": null,
-    "moviefone": 83
+    "rogerEbert": "3.5/4 stars",
+    "moviefone": 83,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/the-lion-king"
   },
   {
     "title": "Spider-Man: Into the Spider-Verse",
@@ -142,7 +170,10 @@
     "imdb": 8.4,
     "rt": 97,
     "mc": 87,
-    "rogerEbert": null,
-    "moviefone": 84
+    "rogerEbert": "3.5/4 stars",
+    "moviefone": 84,
+    "rtUrl": "https://rottentomatoes.com",
+    "mcUrl": "https://metacritic.commovie/spider-man-into-the-spider-verse"
   }
 ]
+
