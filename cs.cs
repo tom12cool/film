@@ -1,18 +1,5 @@
 
 
-{
-    "title": "Man of Steel",
-    "year": 2013,
-    "imdb": 7.1,
-    "rt": 57,
-    "mc": 55,
-    "rogerEbert": "3/4 stars",
-    "moviefone": 67,
-    "poster": "",
-    "rtUrl": "https://www.rottentomatoes.com/",
-    "mcUrl": "https://www.metacritic.com/"
-  }
-
 :root {
   --bg: #090b10;
   --panel: #121620;
