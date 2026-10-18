@@ -287,6 +287,83 @@ function render(containerId, items, emptyMessage) {
   });
 }
 
+
+
+function extractText(value) {
+  if (!value) return "";
+
+  const html = String(value);
+  const doc = new DOMParser().parseFromString(html, "text/html");
+
+  return (doc.body.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getExcerpt(item) {
+  const description =
+    item.description ||
+    item.summary ||
+    item.content ||
+    item["content:encoded"] ||
+    item.encoded ||
+    "";
+
+  const excerpt = extractText(description);
+
+  if (!excerpt) {
+    return "Read the full review on RogerEbert.com.";
+  }
+
+  return excerpt.length > 280
+    ? excerpt.slice(0, 277).trimEnd() + "..."
+    : excerpt;
+}
+
+function normalizeEbertItem(item) {
+  const title = extractText(item.title) || "Movie review";
+
+  let link = typeof item.link === "string"
+    ? item.link
+    : item.link?.href || item.link?.["@_href"] || "";
+
+  if (!link && item.guid && /^https?:\/\//i.test(item.guid)) {
+    link = item.guid;
+  }
+
+  if (link) {
+    try {
+      link = new URL(link, "https://www.rogerebert.com").href;
+      if (new URL(link).hostname !== "www.rogerebert.com" &&
+          new URL(link).hostname !== "rogerebert.com") {
+        link = "";
+      }
+    } catch {
+      link = "";
+    }
+  }
+
+  return {
+    title,
+    excerpt: getExcerpt(item),
+    link,
+    date: item.pubDate || item.published || item.updated || ""
+  };
+}
+
+const excerpt = document.createElement("p");
+excerpt.textContent = review.excerpt;
+card.appendChild(excerpt);
+
+if (review.link) {
+  const link = document.createElement("a");
+  link.href = review.link;
+  link.textContent = "Read full review →";
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  card.appendChild(link);
+}
+
 function filterReviews() {
   const query = ($("search")?.value || "")
     .trim()
