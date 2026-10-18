@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CriticGuide — movie reviews and searches.">
+  <title>CriticGuide — Movie Reviews</title>
+
+  <link rel="stylesheet" href="./cs.css">
+  <script src="./js.js" defer></script>
+</head>
+
+<body>
+  <header>
+    <div class="brand">Critic<span>Guide</span></div>
+    <div class="sub">Movie reviews from critics</div>
+  </header>
+
+  <main>
+    <h1>Latest Movie Reviews</h1>
+    <p class="sub">Reviews from RogerEbert.com and Moviefone.</p>
+
+    <!-- Movie rating search -->
+    <section class="panel" aria-labelledby="ratings-heading">
+      <h2 id="ratings-heading">Movie Ratings</h2>
+      <p class="muted">Enter a movie title to find its saved scores.</p>
+
+      <form id="rating-form" class="toolbar">
+        <input
+          id="rating-search"
+          type="search"
+          placeholder="Enter any movie title..."
+          aria-label="Movie title"
+          required
+        >
+        <button id="rating-button" type="submit">Find ratings</button>
+      </form>
+
+      <div id="rating-title" class="muted" aria-live="polite">
+        Search for a movie to display its ratings.
+      </div>
+
+      <div class="rating-row">
+        <div class="rating">
+          <small>IMDb</small>
+          <strong id="imdb">—</strong>
+        </div>
+        <div class="rating">
+          <small>Rotten Tomatoes</small>
+          <strong id="rotten">—</strong>
+        </div>
+        <div class="rating">
+          <small>Metacritic</small>
+          <strong id="metacritic">—</strong>
+        </div>
+        <div class="rating">
+          <small>RogerEbert.com</small>
+          <strong id="rogerebert">—</strong>
+        </div>
+        <div class="rating">
+          <small>Moviefone</small>
+          <strong id="moviefone">—</strong>
+        </div>
+      </div>
+
+      <div class="rating-links">
+        <a id="imdb-link" href="https://www.imdb.com/find/"
+           target="_blank" rel="noopener noreferrer">IMDb</a>
+        <a id="rotten-link" href="https://www.rottentomatoes.com/search"
+           target="_blank" rel="noopener noreferrer">Rotten Tomatoes</a>
+        <a id="metacritic-link" href="https://www.metacritic.com/"
+           target="_blank" rel="noopener noreferrer">Metacritic</a>
+        <a id="rogerebert-link" href="https://www.rogerebert.com/reviews"
+           target="_blank" rel="noopener noreferrer">RogerEbert.com</a>
+        <a id="moviefone-link" href="https://www.moviefone.com/news/"
+           target="_blank" rel="noopener noreferrer">Moviefone</a>
+      </div>
+
+      <div id="rating-status" class="status" role="status" aria-live="polite">
+        Search scores saved in json.json.
+      </div>
+    </section>
+
+    <!-- Moviefone feed links and feed results -->
+    <section class="panel" id="moviefone-feeds">
+      <h2>Moviefone Reviews</h2>
+
+      <p>
+        <a href="https://www.moviefone.com/feeds/reviews.rss"
+           target="_blank" rel="noopener noreferrer">
+          Moviefone Reviews RSS Feed
+        </a>
+      </p>
+      <p>
+        <a href="https://www.moviefone.com/feeds/reviews.json"
+           target="_blank" rel="noopener noreferrer">
+          Moviefone Reviews JSON Feed
+        </a>
+      </p>
+
+      <button id="refresh-moviefone" type="button">Refresh Feed</button>
+      <p id="moviefone-status" role="status" aria-live="polite">
+        Click Refresh Feed to load available reviews.
+      </p>
+      <div id="moviefone-movies" class="review-grid"></div>
+    </section>
+
+    <!-- Review search and filters -->
+    <section class="panel" aria-label="Review filters">
+      <div class="toolbar">
+        <input
+          id="search"
+          type="search"
+          placeholder="Search movie reviews..."
+          aria-label="Search reviews"
+        >
+
+        <select id="source" aria-label="Filter by source">
+          <option value="all">All sources</option>
+          <option value="RogerEbert.com">RogerEbert.com</option>
+          <option value="Moviefone">Moviefone</option>
+        </select>
+
+        <select id="sort" aria-label="Sort reviews">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="title">Title A–Z</option>
+        </select>
+
+        <button id="refresh" type="button">Refresh reviews</button>
+      </div>
+
+      <div id="status" class="status" role="status" aria-live="polite">
+        Loading review feeds...
+      </div>
+
+      <section
+        class="grid"
+        id="movies"
+        aria-label="Latest movie reviews"
+        aria-live="polite"
+      ></section>
+    </section>
+
+    <section class="panel" id="ebert-section">
+      <h2>RogerEbert.com Reviews</h2>
+      <p class="muted">Latest reviews by RogerEbert.com.</p>
+
+      
+      <div id="ebert-feed" aria-live="polite">
+        RogerEbert.com reviews will appear here.
+      </div>
+
+    <section class="panel">
+      <h2>Review Sources</h2>
+      <p class="muted">Visit these websites to check out their reviews.</p>
+
+      <div class="rating-links">
+        <a href="https://www.rogerebert.com/reviews"
+           target="_blank" rel="noopener noreferrer">RogerEbert.com</a>
+              <a href="https://variety.com/v/film/reviews"
+                 target="_blank" rel="noopener noreferrer">Variety</a>
+ <a href="https://rottentomatoes.com"
+                 target="_blank" rel="noopener noreferrer">Rotten</a>
+        <div class="source-links">
+      <div class="source-card">
+        <h3>Movies in Theaters</h3>
+        <a href="https://www.rottentomatoes.com/browse/movies_in_theaters/"
+           target="_blank" rel="noopener noreferrer">
+          Browse
+        </a>
+      </div>
+
+        <a href="https://www.moviefone.com/news/"
+           target="_blank" rel="noopener noreferrer">Moviefone News &amp; Reviews</a>
+      </div>
+    </section>
+
+    <footer>
+      Ratings and reviews belong to their respective websites.
+    </footer>
+  </main>
+</body>
+</html>
