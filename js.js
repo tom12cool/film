@@ -724,4 +724,3 @@ $("refresh-moviefone")?.addEventListener("click", async () => {
 document.addEventListener("DOMContentLoaded", () => {
   refreshReviews();
 });
-
