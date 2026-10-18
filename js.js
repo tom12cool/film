@@ -1,39 +1,40 @@
-const EBERT_FEED_URLS = [
+
+const EBERT_FEEDS = [
   "https://www.rogerebert.com/reviews/feed",
   "https://www.rogerebert.com/feed"
 ];
 
-const MOVIE_JSON_URL = "https://www.moviefone.com/feeds/reviews.json";
-const MOVIE_RSS_URL = "https://www.moviefone.com/feeds/reviews.rss";
+const MOVIEFONE_FEEDS = [
+  "https://www.moviefone.com/feeds/reviews.json",
+  "https://www.moviefone.com/feeds/reviews.rss"
+];
 
-const FEED_PROXIES = [
-  (url) =>
+const PROXIES = [
+  url =>
     "https://api.allorigins.win/raw?url=" +
     encodeURIComponent(url),
 
-  (url) =>
+  url =>
     "https://corsproxy.io/?" +
     new URLSearchParams({ url }).toString()
 ];
 
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
-let allReviews = [];
-let refreshController = null;
+let reviews = [];
 
-function setStatus(id, message) {
+function status(id, message) {
   const element = $(id);
   if (element) element.textContent = message;
 }
 
-function cleanText(value) {
+function text(value) {
   if (value == null) return "";
 
   if (typeof value === "object") {
-    if (typeof value._ === "string") return value._;
-    if (typeof value.text === "string") return value.text;
-    if (typeof value.value === "string") return value.value;
-    return "";
+    return text(
+      value.name ?? value._ ?? value.text ?? value.value ?? ""
+    );
   }
 
   const doc = new DOMParser().parseFromString(
@@ -41,114 +42,37 @@ function cleanText(value) {
     "text/html"
   );
 
-  return (doc.body.textContent || "").trim();
-}
-
-function safeURL(value) {
-  if (!value) return "";
-
-  try {
-    const url = new URL(String(value), window.location.href);
-
-    if (url.protocol === "https:" || url.protocol === "http:") {
-      return url.href;
-    }
-  } catch (error) {
-    console.warn("Invalid feed URL:", value);
-  }
-
-  return "";
+  return doc.body.textContent.trim();
 }
 
 function formatDate(value) {
   if (!value) return "";
 
-  const date = new Date(value);
+  const parsed = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-async function fetchFeedText(url, signal) {
-  let lastError;
-
-  for (const makeProxyURL of FEED_PROXIES) {
-    if (signal?.aborted) {
-      throw new Error("Feed refresh cancelled.");
-    }
-
-    const controller = new AbortController();
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 12000);
-
-    const cancelRequest = () => controller.abort();
-
-    signal?.addEventListener("abort", cancelRequest, {
-      once: true
-    });
-
-    try {
-      const response = await fetch(makeProxyURL(url), {
-        method: "GET",
-        cache: "no-store",
-        signal: controller.signal
+  return Number.isNaN(parsed.getTime())
+    ? ""
+    : parsed.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const text = await response.text();
-
-      if (!text.trim()) {
-        throw new Error("The feed returned an empty response.");
-      }
-
-      return text;
-    } catch (error) {
-      if (signal?.aborted) {
-        throw new Error("Feed refresh cancelled.");
-      }
-
-      lastError = controller.signal.aborted
-        ? new Error("Request timed out after 12 seconds.")
-        : error;
-
-      console.warn(
-        `Feed proxy failed for ${url}:`,
-        lastError.message
-      );
-    } finally {
-      clearTimeout(timeoutId);
-      signal?.removeEventListener("abort", cancelRequest);
-    }
-  }
-
-  throw new Error(
-    `All feed proxies failed. ${
-      lastError?.message || "Unknown error."
-    }`
-  );
 }
 
-function normalizeReview(item, source) {
-  const title = cleanText(
-    item.title ??
-    item["dc:title"] ??
-    item.name ??
-    ""
-  );
+function safeLink(value) {
+  try {
+    const url = new URL(String(value), window.location.href);
 
-  const linkValue =
+    return ["https:", "http:"].includes(url.protocol)
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+function normalize(item, source) {
+  const link =
     item.link?.href ??
     item.link?.["@_href"] ??
     item.link ??
@@ -156,141 +80,162 @@ function normalizeReview(item, source) {
     item.guid ??
     "";
 
-  const description = cleanText(
-    item.description ??
-    item.summary ??
-    item.content ??
-    item["content:encoded"] ??
-    item["content:encoded#text"] ??
-    ""
-  );
-
-  const date = cleanText(
-    item.pubDate ??
-    item.published ??
-    item.updated ??
-    item.date ??
-    item["dc:date"] ??
-    ""
-  );
-
-  const author = cleanText(
-    item.author?.name ??
-    item.author ??
-    item.creator ??
-    item["dc:creator"] ??
-    ""
-  );
-
   return {
-    title: title || "Untitled review",
-    link: safeURL(linkValue),
-    description,
-    date,
-    author,
+    title: text(item.title ?? item.name) || "Untitled review",
+    link: safeLink(link),
+
+    description: text(
+      item.description ??
+      item.summary ??
+      item.content_text ??
+      item.content ??
+      item["content:encoded"] ??
+      ""
+    ),
+
+    date: text(
+      item.pubDate ??
+      item.published ??
+      item.updated ??
+      item.date ??
+      item["dc:date"] ??
+      ""
+    ),
+
+    author: text(
+      item.author?.name ??
+      item.author ??
+      item.creator ??
+      item["dc:creator"] ??
+      ""
+    ),
+
     source
   };
 }
 
-function parseReviewFeed(text, source) {
+function parseFeed(data, source) {
   // Try JSON first.
   try {
-    const data = JSON.parse(text);
+    const json = JSON.parse(data);
 
-    let items = [];
+    const items = Array.isArray(json)
+      ? json
+      : json.items ??
+        json.results ??
+        json.articles ??
+        json.feed?.items ??
+        json.data ??
+        [];
 
-    if (Array.isArray(data)) {
-      items = data;
-    } else if (Array.isArray(data.items)) {
-      items = data.items;
-    } else if (Array.isArray(data.results)) {
-      items = data.results;
-    } else if (Array.isArray(data.articles)) {
-      items = data.articles;
-    } else if (Array.isArray(data.feed?.items)) {
-      items = data.feed.items;
-    } else if (Array.isArray(data.data)) {
-      items = data.data;
-    }
-
-    if (items.length) {
+    if (Array.isArray(items) && items.length) {
       return items
-        .map((item) => normalizeReview(item, source))
-        .filter((item) => item.title !== "Untitled review");
+        .map(item => normalize(item, source))
+        .filter(item => item.title !== "Untitled review");
     }
-  } catch (error) {
-    // Not JSON: continue to XML parsing.
+  } catch {
+    // Continue to XML parsing.
   }
 
+  // Try RSS or Atom XML.
   const xml = new DOMParser().parseFromString(
-    text,
+    data,
     "application/xml"
   );
 
   if (xml.querySelector("parsererror")) {
-    throw new Error(
-      "The server did not return valid RSS, Atom, or JSON."
-    );
+    throw new Error("Invalid RSS, Atom, or JSON feed.");
   }
 
-  const entries = [
-    ...xml.querySelectorAll("item"),
-    ...xml.querySelectorAll("entry")
-  ];
+  return [...xml.querySelectorAll("item, entry")]
+    .map(item => {
+      const get = (...names) => {
+        for (const name of names) {
+          const node = item.getElementsByTagName(name)[0];
 
-  return entries.map((entry) => {
-    const getText = (...selectors) => {
-      for (const selector of selectors) {
-        const node = entry.querySelector(selector);
-
-        if (node) {
-          return node.textContent?.trim() || "";
+          if (node) return node.textContent.trim();
         }
-      }
 
-      return "";
-    };
+        return "";
+      };
 
-    const linkNode = entry.querySelector("link");
-    const link =
-      linkNode?.getAttribute("href") ||
-      linkNode?.textContent?.trim() ||
-      getText("guid");
+      const linkNode = item.querySelector("link");
 
-    return {
-      title: getText("title") || "Untitled review",
-      link: safeURL(link),
-      description: cleanText(
-        getText(
+      const link =
+        linkNode?.getAttribute("href") ||
+        linkNode?.textContent?.trim() ||
+        get("guid");
+
+      return normalize({
+        title: get("title"),
+        link,
+        description: get(
           "description",
           "summary",
           "content",
           "encoded"
-        )
-      ),
-      date: getText(
-        "pubDate",
-        "published",
-        "updated",
-        "date"
-      ),
-      author: getText(
-        "author name",
-        "author",
-        "creator"
-      ),
-      source
-    };
-  }).filter((item) => item.title !== "Untitled review");
+        ),
+        pubDate: get(
+          "pubDate",
+          "published",
+          "updated",
+          "date"
+        ),
+        author: get("author", "creator")
+      }, source);
+    })
+    .filter(item => item.title !== "Untitled review");
 }
 
-function renderReviewList(containerId, reviews, emptyMessage) {
+async function fetchFeed(url) {
+  let lastError;
+
+  for (const makeProxyURL of PROXIES) {
+    try {
+      const controller = new AbortController();
+
+      const timeout = setTimeout(
+        () => controller.abort(),
+        12000
+      );
+
+      try {
+        const response = await fetch(makeProxyURL(url), {
+          cache: "no-store",
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.text();
+
+        if (!data.trim()) {
+          throw new Error("Empty feed response.");
+        }
+
+        return data;
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (error) {
+      lastError = error;
+      console.warn("Feed request failed:", error.message);
+    }
+  }
+
+  throw lastError || new Error("All feed requests failed.");
+}
+
+function render(containerId, items, emptyMessage) {
   const container = $(containerId);
+
   if (!container) return;
 
   container.replaceChildren();
 
-  if (!reviews.length) {
+  if (!items.length) {
     const message = document.createElement("p");
     message.className = "muted";
     message.textContent = emptyMessage;
@@ -298,7 +243,7 @@ function renderReviewList(containerId, reviews, emptyMessage) {
     return;
   }
 
-  reviews.forEach((review) => {
+  items.forEach(review => {
     const article = document.createElement("article");
     article.className = "movie-card review-card";
 
@@ -306,37 +251,34 @@ function renderReviewList(containerId, reviews, emptyMessage) {
 
     if (review.link) {
       const link = document.createElement("a");
+
       link.href = review.link;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.textContent = review.title;
+
       heading.appendChild(link);
     } else {
       heading.textContent = review.title;
     }
 
-    article.appendChild(heading);
-
     const metadata = document.createElement("p");
     metadata.className = "muted";
 
-    const details = [review.source];
+    metadata.textContent = [
+      review.source,
+      review.author,
+      formatDate(review.date)
+    ].filter(Boolean).join(" · ");
 
-    if (review.author) details.push(review.author);
-
-    if (review.date) {
-      details.push(formatDate(review.date));
-    }
-
-    metadata.textContent = details.join(" · ");
-    article.appendChild(metadata);
+    article.append(heading, metadata);
 
     if (review.description) {
       const description = document.createElement("p");
 
       description.textContent =
-        review.description.length > 450
-          ? review.description.slice(0, 450) + "…"
+        review.description.length > 400
+          ? review.description.slice(0, 400) + "…"
           : review.description;
 
       article.appendChild(description);
@@ -346,227 +288,161 @@ function renderReviewList(containerId, reviews, emptyMessage) {
   });
 }
 
+function filterReviews() {
+  const query = ($("search")?.value || "")
+    .trim()
+    .toLowerCase();
 
-function renderMainReviews() {
-  const search = $("search")?.value.trim().toLowerCase() || "";
   const source = $("source")?.value || "all";
   const sort = $("sort")?.value || "newest";
 
-  let reviews = allReviews.filter((review) => {
-    const matchesSearch =
-      !search ||
-      review.title.toLowerCase().includes(search) ||
-      review.description.toLowerCase().includes(search) ||
-      review.author.toLowerCase().includes(search);
-
+  const filtered = reviews.filter(review => {
     const matchesSource =
       source === "all" || review.source === source;
 
-    return matchesSearch && matchesSource;
+    const matchesSearch = [
+      review.title,
+      review.description,
+      review.author
+    ].some(value =>
+      value.toLowerCase().includes(query)
+    );
+
+    return matchesSource && matchesSearch;
   });
 
-  reviews.sort((a, b) => {
-    const dateA = Date.parse(a.date) || 0;
-    const dateB = Date.parse(b.date) || 0;
-
-    if (sort === "oldest") return dateA - dateB;
+  filtered.sort((a, b) => {
     if (sort === "title") {
       return a.title.localeCompare(b.title);
     }
 
-    return dateB - dateA;
+    const dateA = Date.parse(a.date) || 0;
+    const dateB = Date.parse(b.date) || 0;
+
+    return sort === "oldest"
+      ? dateA - dateB
+      : dateB - dateA;
   });
 
-  renderReviewList(
+  render(
     "movies",
-    reviews,
-    "No reviews match your filters."
+    filtered,
+    "No reviews match your search."
   );
 
-  setStatus("status", `${reviews.length} reviews shown.`);
+  status("status", `${filtered.length} reviews shown.`);
 }
 
-
-async function loadEbertFeed(signal) {
-  setStatus("ebert-feed", "Loading RogerEbert reviews…");
+async function loadSource(
+  urls,
+  source,
+  containerId,
+  statusId
+) {
+  status(statusId, `Loading ${source} reviews…`);
 
   let lastError;
 
-  for (const url of EBERT_FEED_URLS) {
+  for (const url of urls) {
     try {
-      const text = await fetchFeedText(url, signal);
+      const data = await fetchFeed(url);
+      const items = parseFeed(data, source);
 
-      const reviews = parseReviewFeed(
-        text,
-        "RogerEbert.com"
-      );
-
-      if (!reviews.length) {
-        throw new Error("No review entries were found.");
+      if (!items.length) {
+        throw new Error("No review entries found.");
       }
 
-      allReviews = [
-        ...allReviews.filter(
-          review => review.source !== "RogerEbert.com"
-        ),
-        ...reviews
+      // Replace only this source's saved reviews.
+      reviews = [
+        ...reviews.filter(review => review.source !== source),
+        ...items
       ];
 
-      renderReviewList(
-        "ebert-feed",
-        reviews,
-        "No RogerEbert reviews found."
+      // Render this source's dedicated review section.
+      render(
+        containerId,
+        items,
+        `No ${source} reviews found.`
       );
 
-      setStatus(
-        "ebert-feed",
-        `Loaded ${reviews.length} RogerEbert reviews.`
+      status(
+        statusId,
+        `${items.length} ${source} reviews loaded.`
       );
 
-      renderMainReviews();
+      // Also update the main review list.
+      filterReviews();
 
-      return reviews;
+      return items;
     } catch (error) {
-      if (signal?.aborted) return [];
-
       lastError = error;
-
-      console.warn(
-        `RogerEbert feed failed: ${url}`,
-        error
-      );
+      console.warn(`${source} feed failed:`, error.message);
     }
   }
 
-  setStatus(
-    "ebert-feed",
-    `RogerEbert feed unavailable: ${
-      lastError?.message || "Unknown error."
+  status(
+    statusId,
+    `${source} feed unavailable. ${
+      lastError?.message || ""
     }`
+  );
+
+  render(
+    containerId,
+    [],
+    `${source} reviews could not be loaded.`
   );
 
   return [];
 }
 
-async function loadMoviefoneFeed(signal) {
-  setStatus(
-    "moviefone-status",
-    "Loading Moviefone reviews…"
-  );
+function refreshReviews() {
+  status("status", "Refreshing review feeds…");
 
-  try {
-    let text;
-    let lastError;
+  return Promise.allSettled([
+    loadSource(
+      EBERT_FEEDS,
+      "RogerEbert.com",
+      "ebert-feed",
+      "ebert-status"
+    ),
 
-    for (const url of [MOVIE_JSON_URL, MOVIE_RSS_URL]) {
-      try {
-        text = await fetchFeedText(url, signal);
-
-        const parsed = parseReviewFeed(text, "Moviefone");
-
-        if (parsed.length) break;
-
-        throw new Error("No review entries were found.");
-      } catch (error) {
-        if (signal?.aborted) return [];
-
-        lastError = error;
-        text = null;
-      }
-    }
-
-    if (!text) {
-      throw lastError || new Error("Both Moviefone feeds failed.");
-    }
-
-    const reviews = parseReviewFeed(text, "Moviefone");
-
-    if (!reviews.length) {
-      throw new Error("No review entries were found.");
-    }
-
-    allReviews = [
-      ...allReviews.filter(
-        (review) => review.source !== "Moviefone"
-      ),
-      ...reviews
-    ];
-
-    renderReviewList(
+    loadSource(
+      MOVIEFONE_FEEDS,
+      "Moviefone",
       "moviefone-movies",
-      reviews,
-      "No Moviefone reviews found."
-    );
-
-    setStatus(
-      "moviefone-status",
-      `Loaded ${reviews.length} Moviefone reviews.`
-    );
-
-    renderMainReviews();
-
-    return reviews;
-  } catch (error) {
-    if (signal?.aborted) return [];
-
-    console.error("Moviefone feed error:", error);
-
-    setStatus(
-      "moviefone-status",
-      `Moviefone feed failed: ${error.message}`
-    );
-
-    return [];
-  }
-}
-
-
-async function refreshReviews() {
-  if (refreshController) {
-    refreshController.abort();
-  }
-
-  refreshController = new AbortController();
-  const signal = refreshController.signal;
-
-  setStatus("status", "Refreshing review feeds…");
-  setStatus("ebert-feed", "Loading RogerEbert reviews…");
-  setStatus("moviefone-status", "Loading Moviefone reviews…");
-
-  await Promise.allSettled([
-    loadEbertFeed(signal),
-    loadMoviefoneFeed(signal)
+      "moviefone-status"
+    )
   ]);
-
-  if (!signal.aborted) {
-    renderMainReviews();
-  }
 }
 
-function getRatingURLs(title) {
-  const q = encodeURIComponent(title);
+function ratingLinks(title) {
+  const query = encodeURIComponent(title);
 
-  return {
-    "imdb-link": `https://www.imdb.com/find/?q=${q}`,
-    "rotten-link": `https://www.rottentomatoes.com/search?search=${q}`,
-    "metacritic-link": `https://www.google.com/search?q=${encodeURIComponent(
-      "site:metacritic.com/movie " + title
-    )}`,
-    "rogerebert-link": `https://www.google.com/search?q=${encodeURIComponent(
-      "site:rogerebert.com/reviews " + title
-    )}`,
-    "moviefone-link": `https://www.google.com/search?q=${encodeURIComponent(
-      "site:moviefone.com " + title
-    )}`
+  const links = {
+    "imdb-link":
+      `https://www.imdb.com/find/?q=${query}`,
+
+    "rotten-link":
+      `https://www.rottentomatoes.com/search?search=${query}`,
+
+    "metacritic-link":
+      `https://www.google.com/search?q=${
+        encodeURIComponent("site:metacritic.com/movie " + title)
+      }`,
+
+    "rogerebert-link":
+      `https://www.google.com/search?q=${
+        encodeURIComponent("site:rogerebert.com/reviews " + title)
+      }`,
+
+    "moviefone-link":
+      `https://www.google.com/search?q=${
+        encodeURIComponent("site:moviefone.com " + title)
+      }`
   };
-}
 
-function updateRatingLinks(title) {
-  if (!title) return;
-
-  const urls = getRatingURLs(title);
-
-  Object.entries(urls).forEach(([id, url]) => {
+  Object.entries(links).forEach(([id, url]) => {
     const link = $(id);
 
     if (link) {
@@ -577,126 +453,105 @@ function updateRatingLinks(title) {
   });
 }
 
-function setRatingText(id, value, suffix = "") {
-  const element = $(id);
-  if (!element) return;
-
-  element.textContent =
-    value !== null && value !== undefined && value !== ""
-      ? `${value}${suffix}`
-      : "N/A";
-}
-
-async function searchScores() {
-  const input = $("rating-search");
-  const title = input?.value.trim();
-  const status = $("rating-status");
+async function searchRatings() {
+  const title = $("rating-search")?.value.trim();
 
   if (!title) {
-    if (status) status.textContent = "Please enter a movie title.";
-    input?.focus();
+    status("rating-status", "Enter a movie title.");
     return;
   }
 
-  try {
-    if (status) status.textContent = "Searching…";
+  status("rating-status", "Searching saved ratings…");
 
+  try {
     const response = await fetch("./json.json", {
       cache: "no-store"
     });
 
     if (!response.ok) {
-      throw new Error(`Could not load json.json: HTTP ${response.status}`);
+      throw new Error("Could not load json.json.");
     }
 
-    const movie = await response.json();
+    const data = await response.json();
 
-    if (
-      !movie ||
-      typeof movie !== "object" ||
-      Array.isArray(movie) ||
-      typeof movie.title !== "string"
-    ) {
-      throw new Error(
-        "json.json must contain one movie object with a title."
+    // Supports either one movie or an array of movies.
+    const movies = Array.isArray(data) ? data : [data];
+
+    const movie = movies.find(item =>
+      item.title?.trim().toLowerCase() === title.toLowerCase()
+    );
+
+    if (!movie) {
+      status(
+        "rating-status",
+        "Movie not found in json.json."
       );
-    }
-
-    if (movie.title.trim().toLowerCase() !== title.toLowerCase()) {
-      if (status) {
-        status.textContent =
-          `Movie not found. The database currently contains "${movie.title}".`;
-      }
       return;
     }
 
-    const heading = $("rating-title");
+    $("rating-title").textContent =
+      movie.title + (movie.year ? ` (${movie.year})` : "");
 
-    if (heading) {
-      heading.textContent = movie.year
-        ? `${movie.title} (${movie.year})`
-        : movie.title;
-    }
+    $("imdb").textContent =
+      movie.imdb != null ? `${movie.imdb}/10` : "N/A";
 
-    setRatingText(
-      "imdb",
-      movie.imdb,
-      movie.imdb != null ? "/10" : ""
-    );
+    $("rotten").textContent =
+      movie.rt != null ? `${movie.rt}%` : "N/A";
 
-    setRatingText(
-      "rotten",
-      movie.rt,
-      movie.rt != null ? "%" : ""
-    );
+    $("metacritic").textContent =
+      movie.mc != null ? `${movie.mc}/100` : "N/A";
 
-    setRatingText(
-      "metacritic",
-      movie.mc,
-      movie.mc != null ? "/100" : ""
-    );
+    $("rogerebert").textContent =
+      movie.rogerEbert ?? "N/A";
 
-    setRatingText("rogerebert", movie.rogerEbert);
+    $("moviefone").textContent =
+      movie.moviefone != null
+        ? movie.moviefone
+        : "N/A";
 
-    setRatingText(
-      "moviefone",
-      movie.moviefone,
-      movie.moviefone != null ? "%" : ""
-    );
+    ratingLinks(movie.title);
 
-    updateRatingLinks(movie.title);
-
-    if (status) status.textContent = "Scores loaded successfully.";
+    status("rating-status", "Saved ratings loaded.");
   } catch (error) {
     console.error("Rating search failed:", error);
 
-    if (status) {
-      status.textContent =
-        "Could not load scores. Check json.json and the browser console.";
-    }
+    status(
+      "rating-status",
+      "Could not load ratings. Check json.json."
+    );
   }
 }
 
-$("rating-form")?.addEventListener("submit", (event) => {
+// Movie rating search.
+$("rating-form")?.addEventListener("submit", event => {
   event.preventDefault();
-  searchScores();
+  searchRatings();
 });
 
-$("rating-search")?.addEventListener("input", (event) => {
+// Update rating website search links as the title is typed.
+$("rating-search")?.addEventListener("input", event => {
   const title = event.target.value.trim();
-  if (title) updateRatingLinks(title);
+
+  if (title) ratingLinks(title);
 });
 
-$("search")?.addEventListener("input", renderMainReviews);
-$("source")?.addEventListener("change", renderMainReviews);
-$("sort")?.addEventListener("change", renderMainReviews);
+// Main review search, filters, and sorting.
+$("search")?.addEventListener("input", filterReviews);
+$("source")?.addEventListener("change", filterReviews);
+$("sort")?.addEventListener("change", filterReviews);
 
+// Refresh both review feeds.
 $("refresh")?.addEventListener("click", refreshReviews);
-$("refresh-moviefone")?.addEventListener("click", async () => {
-  // Refresh the Moviefone feed without restarting RogerEbert.
-  await loadMoviefoneFeed(new AbortController().signal);
+
+// Refresh Moviefone independently.
+$("refresh-moviefone")?.addEventListener("click", () => {
+  loadSource(
+    MOVIEFONE_FEEDS,
+    "Moviefone",
+    "moviefone-movies",
+    "moviefone-status"
+  );
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  refreshReviews();
-});
+// Load reviews when the script runs.
+refreshReviews();
