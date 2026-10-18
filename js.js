@@ -522,28 +522,23 @@ async function searchRatings() {
   }
 }
 
-// Movie rating search.
 $("rating-form")?.addEventListener("submit", event => {
   event.preventDefault();
   searchRatings();
 });
 
-// Update rating website search links as the title is typed.
 $("rating-search")?.addEventListener("input", event => {
   const title = event.target.value.trim();
 
   if (title) ratingLinks(title);
 });
 
-// Main review search, filters, and sorting.
 $("search")?.addEventListener("input", filterReviews);
 $("source")?.addEventListener("change", filterReviews);
 $("sort")?.addEventListener("change", filterReviews);
 
-// Refresh both review feeds.
 $("refresh")?.addEventListener("click", refreshReviews);
 
-// Refresh Moviefone independently.
 $("refresh-moviefone")?.addEventListener("click", () => {
   loadSource(
     MOVIEFONE_FEEDS,
@@ -553,5 +548,4 @@ $("refresh-moviefone")?.addEventListener("click", () => {
   );
 });
 
-// Load reviews when the script runs.
 refreshReviews();
